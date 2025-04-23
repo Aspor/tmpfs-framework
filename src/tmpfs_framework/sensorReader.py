@@ -16,7 +16,8 @@ import cbor2
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from cbor_utils import decodeTags
+
+from .cbor_utils import decodeTags
 
 tmpfsPath = '/home/robot'
 

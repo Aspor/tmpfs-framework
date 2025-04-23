@@ -1,4 +1,17 @@
+import random
+import string
+from pathlib import Path
+import os
+
+import time
+
 import numpy as np
+
+import cbor2
+import logging
+
+tmpfsPath = '/home/robot'
+
 
 tags = [r for r in range(64,87)] #typed arrays
 tags.append(40) #array of two arrays
@@ -13,9 +26,9 @@ def decodeTags(decoder,tag,shareable_index=None ):
      return decodeHomogenousArary(decoder,tag)
 
 def decodeTag40(decoder,tag,shareable_index=None):
-  print(tag)
+  logging.debug(tag)
   shape = tag.value[0]
-  print(shape)
+  logging.debug(shape)
   #arr = np.zeroes(shape)
   values = np.asanyarray(tag.value[1])
   return values.reshape(shape)
@@ -46,9 +59,38 @@ dtype_map= {64:np.dtype(np.uint8,   ),#,'|'),
             87:np.dtype(np.float128,),#,'<'),
           }
 
+tag_map = dict((reversed(item) for item in dtype_map.items()))
+
+
+
+
 def decodeHomogenousArary(decoder,tag,shareable_index=None):
 
    dtype = dtype_map[tag.tag]
 
    array =np.frombuffer(tag.value,dtype=dtype)
    return array
+
+def numpy_encoder(encoder, value):
+  value = np.asanyarray(value)
+  #print(f"{value.shape=}, {value=}")
+  if len(value.shape)<2:
+      encoder.encode_semantic(cbor2.CBORTag(tag_map[value.dtype],value.data.tobytes()) )
+  else:
+    encoder.encode_semantic(cbor2.CBORTag(40,[value.shape, value.flatten()]))
+
+
+def write_cbor(filename,data):
+  tmpf = get_temp_file()
+  Path(filename).parent.mkdir(parents=True,exist_ok=True)
+  with open(tmpf,'wb') as fd:
+    encoder = cbor2.CBOREncoder(fd, default=numpy_encoder)
+    encoder.encode(data)
+  os.rename(tmpf, filename)
+
+
+def get_temp_file(N=5):
+  tmpdir = tmpfsPath
+  tmpf =tmpdir+'/tmp'+"".join(random.choices(
+      string.ascii_uppercase + string.digits, k=N)) +str(time.time()).split('.')[-1]
+  return tmpf
