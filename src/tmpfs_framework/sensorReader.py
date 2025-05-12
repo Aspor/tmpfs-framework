@@ -72,6 +72,19 @@ class SensorReader:
         if not self.attributes:
             raise SensorNotInitializedError(f"Measurements not initialized, {self.sensorPath}")
 
+
+        files =os.listdir(self.sensorPath)
+        if to_watch in files:
+          self.to_watch = to_watch
+        else:
+          to_watch = files[0]
+          for fn in files:
+            print(fn, os.path.isfile(os.path.join(self.sensorPath,fn)))
+            if os.path.isfile(os.path.join(self.sensorPath,fn)):
+              to_watch = fn
+              break
+          self.to_watch=to_watch
+
         self.waitTime = 0.01
         self.workerThread = multiprocessing.Process(target=self.writerWorker)
         self.saveEvent = multiprocessing.Event()
@@ -80,10 +93,11 @@ class SensorReader:
         self.waitEvent.clear()
         self.first = False
         self.prevStat = os.stat(self.sensorPath)
-        self.to_watch = to_watch
         self.prev_ts = time.time()
         self.observers = {}
         self.init_attributes()
+        self.observer = Observer()
+
 
     def init_attributes(self):
         """
@@ -163,7 +177,8 @@ class SensorReader:
         """
         if path[-1] != '/':
             path += '/'
-        timestamp = str(int(time.time_ns() / 1e6))  # in milliseconds
+        timestamp=str(int(os.stat(os.path.join(self.sensorPath,self.to_watch)).st_mtime_ns/1e6)) # in milliseconds
+        #timestamp = str(int(time.time_ns() / 1e6))  # in milliseconds
         compresslevel = compresslevel
 
         if self.first and self.has_metaFile:
@@ -292,7 +307,7 @@ class SensorReader:
             time.sleep(self.waitTime - time_step)
             self.waitEvent.clear()
         self.prev_ts = time.time()
-        self.takeSnapShot(datadir, compress=True)
+        self.takeSnapShot(datadir, compresslevel=3)
 
     def init_watchdog(self, datadir):
         """
@@ -330,6 +345,8 @@ class SensorReader:
             self.observer.stop()
             self.waitEvent.clear()
             del self.observer
+            self.observer = Observer()
+
         except:
             pass
 
