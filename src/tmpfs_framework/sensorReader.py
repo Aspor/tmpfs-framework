@@ -452,3 +452,67 @@ def read(filename, attribute=None):
     with open(filename, 'rb') as fd:
         decoder = cbor2.CBORDecoder(fd, tag_hook=decodeTags)
         return decoder.decode()
+
+
+
+def parseZip(filename):
+    #Creates dictionary hiararchy from file hierachy in zip file and parses cbor data
+    #print(filename)
+    try:
+      with open(filename,'rb') as f:
+         return parseBinaryZip(f)
+    except Exception as e:
+       print(e, filename, os.getcwd() )
+
+    return {}
+
+
+def parseBinaryZip(zipdata):
+    #Creates dictionary hiararchy from file hierachy in zip file and parses cbor data
+    #Handles nested zip archives
+    data = {}
+    with zipfile.ZipFile(zipdata,'r') as zf:
+      names = zf.namelist()
+      for file in names:
+        path = file.split("/")
+        d=data
+        if len(path)>1:
+          d =data
+          for part in path[:-1]:
+            if part not in d:
+              d[part]={}
+            d=d[part]
+          if(file.endswith("zip")):
+            d[path[-1][:-4]] = parseBinaryZip(zf.open(file))
+            continue
+          d[path[-1]] = cbor2.load(zf.open(file), tag_hook=decodeTags)
+        else:
+          if(file.endswith("zip")):
+            d[file.split('/')[-1][:-4] ] = parseBinaryZip(zf.open(file))
+            continue
+          d[file.split('/')[-1]]=cbor2.load(zf.open(file),  tag_hook=decodeTags )
+    return data
+
+
+
+def create_sensor(dirPath, filename, sensorName=None, *args, **kwarg):
+  """Create a sensor object from provided directory path and sensor file name
+
+  Args:
+      dirPath (_type_): _description_
+      filename (_type_): _description_
+      sensorName (_type_, optional): _description_. Defaults to None.
+
+  Returns:
+      _type_: _description_
+  """
+  try:
+    n = filename if sensorName is None else sensorName
+
+    #Create a sensor type that inherits SensorReader. This will allow modifying class features online
+    Sensor = type(n, (SensorReader,), {})
+
+    sensor = Sensor(dirPath= dirPath, filename=filename, sensorName=None, **kwarg)
+    return sensor
+  except Exception as e:
+    print(e, "no sensor", filename)
