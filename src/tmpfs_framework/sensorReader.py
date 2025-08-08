@@ -84,6 +84,7 @@ class SensorReader:
         self.prev_ts = time.time()
         self.observers = {}
         self.init_attributes()
+        self.observer = Observer()
 
     def init_attributes(self):
         """
@@ -330,6 +331,8 @@ class SensorReader:
             self.observer.stop()
             self.waitEvent.clear()
             del self.observer
+            self.observer = Observer()
+
         except:
             pass
 
