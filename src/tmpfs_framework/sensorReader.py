@@ -17,9 +17,8 @@ import cbor2
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from .cbor_utils import decodeTags
-
-tmpfsPath = '/home/robot'
+from .cbor_utils import decode_tags
+import tmpfs_framework
 
 
 # Configure logging
@@ -30,20 +29,21 @@ class SensorNotInitializedError(Exception):
     pass
 
 class SensorReader:
-    def __init__(self, dirPath, filename=None, sensorName=None, datadir="collected_data/", to_watch="measurement.zip", **kwargs):
+    def __init__(self, directory, filename=None, sensor_name=None, datadir="collected_data/",
+                  to_watch="measurement.zip", tmpfs_path = None, **kwargs):
         """
         Initialize the SensorReader object.
 
         Parameters:
-        dirPath (str): Directory path where sensor data is stored.
+        directory (str): Directory path where sensor data is stored.
         filename (str or int, optional): Filename of the sensor data. Defaults to None.
-        sensorName (str, optional): Name of the sensor. Defaults to None.
+        sensor_name (str, optional): Name of the sensor. Defaults to None.
         datadir (str, optional): Directory to store collected data. Defaults to "collected_data/".
         to_watch (str, optional): File to watch for changes. Defaults to "measurement.zip".
         """
-        self.tmpfsPath = tmpfsPath
+        self.tmpfs_path = tmpfs_path if tmpfs_path is not None else tmpfs_framework.TMPFS_PATH
         self.datadir = datadir
-        d = os.path.join(tmpfsPath, dirPath)
+        d = os.path.join(self.tmpfs_path, directory)
 
         if filename is None or isinstance(filename, int):
             if filename is None:
@@ -51,42 +51,42 @@ class SensorReader:
             files = os.listdir(d)
             filename = files[filename]
 
-        self.sensorPath = os.path.join(d, filename)
+        self.sensor_path = os.path.join(d, filename)
         self.filename = filename
-        self.sensorName = filename.replace(" ", "_") if sensorName is None else sensorName
+        self.sensor_name = filename.replace(" ", "_") if sensor_name is None else sensor_name
         self.has_zip = False
         self.has_metaFile = False
 
-        if os.path.isdir(self.sensorPath):
-            self.attributes = os.listdir(self.sensorPath)
-            if os.path.isfile(os.path.join(self.sensorPath, 'measurement.zip')):
+        if os.path.isdir(self.sensor_path):
+            self.attributes = os.listdir(self.sensor_path)
+            if os.path.isfile(os.path.join(self.sensor_path, 'measurement.zip')):
                 self.has_zip = True
-            if os.path.isfile(os.path.join(self.sensorPath, 'metadata.zip')):
+            if os.path.isfile(os.path.join(self.sensor_path, 'metadata.zip')):
                 self.has_metaFile = True
             self.attributes = [file for file in self.attributes if "measurement" not in file and "metadata" not in file]
-        elif os.path.isfile(self.sensorPath):
+        elif os.path.isfile(self.sensor_path):
             self.attributes = [filename]
         else:
-            raise FileNotFoundError(f"No datafile found, {self.sensorPath}")
+            raise FileNotFoundError(f"No datafile found, {self.sensor_path}")
 
         if not self.attributes:
-            raise SensorNotInitializedError(f"Measurements not initialized, {self.sensorPath}")
+            raise SensorNotInitializedError(f"Measurements not initialized, {self.sensor_path}")
 
-        self.waitTime = 0.01
-        self.workerThread = multiprocessing.Process(target=self.writerWorker)
-        self.saveEvent = multiprocessing.Event()
-        self.saveEvent.clear()
-        self.waitEvent = multiprocessing.Event()
-        self.waitEvent.clear()
+        self.wait_time = 0.01
+        self.worker_thread = multiprocessing.Process(target=self._writer_worker)
+        self.save_event = multiprocessing.Event()
+        self.save_event.clear()
+        self.wait_event = multiprocessing.Event()
+        self.wait_event.clear()
         self.first = False
-        self.prevStat = os.stat(self.sensorPath)
+        self.prev_stat = os.stat(self.sensor_path)
         self.to_watch = to_watch
         self.prev_ts = time.time()
         self.observers = {}
-        self.init_attributes()
+        self._init_attributes()
         self.observer = Observer()
 
-    def init_attributes(self):
+    def _init_attributes(self):
         """
         Initialize attributes for the SensorReader object.
         """
@@ -98,11 +98,11 @@ class SensorReader:
                 filename = attribute
                 attribute = attribute.replace(" ", "_").replace(".", "_")
                 if not hasattr(self, f"get_{attribute}"):
-                    self.__setattr__(f"get_{attribute}", self.attribute_function(filename))
+                    self.__setattr__(f"get_{attribute}", self._create_attribute_function(filename))
                 attribute_name = attribute.replace(" ", "_")
                 cleaned_attributes.append(attribute_name)
                 if not hasattr(self, attribute_name):
-                    prop = property(fget=self.attribute_function(filename), doc=f"{attribute} getter property")
+                    prop = property(fget=self._create_attribute_function(filename), doc=f"{attribute} getter property")
                     setattr(self.__class__, attribute_name, prop)
             except Exception as e:
                 logging.debug(e)
@@ -111,18 +111,18 @@ class SensorReader:
         self.attributes.append("attributes")
 
         if self.has_metaFile:
-            self.__setattr__("get_metadata", self.attribute_function("metadata.zip"))
-            prop = property(fget=self.attribute_function("metadata.zip"), doc="metadata getter property")
+            self.__setattr__("get_metadata", self._create_attribute_function("metadata.zip"))
+            prop = property(fget=self._create_attribute_function("metadata.zip"), doc="metadata getter property")
             setattr(self.__class__, "metadata", prop)
             self.attributes.append("metadata")
 
         if self.has_zip:
-            self.__setattr__("get_measurement", self.attribute_function("measurement.zip"))
-            prop = property(fget=self.attribute_function("measurement.zip"), doc="measurement getter property")
+            self.__setattr__("get_measurement", self._create_attribute_function("measurement.zip"))
+            prop = property(fget=self._create_attribute_function("measurement.zip"), doc="measurement getter property")
             setattr(self.__class__, "measurement", prop)
             self.attributes.append("measurement")
 
-    def attribute_function(self, attribute):
+    def _create_attribute_function(self, attribute):
         """
         Create a getter function for the given attribute.
 
@@ -133,7 +133,7 @@ class SensorReader:
         function: Getter function for the attribute.
         """
         def func(self):
-            return self.getValue(attribute)
+            return self.get_value(attribute)
         func.__doc__ = f"Getter function for attribute {attribute}. Reads value from tmpfs as numpy array"
         return func
 
@@ -148,10 +148,10 @@ class SensorReader:
         tuple: Data and intrinsics.
         """
         path = '/' + path
-        data, intrinsics = read(self.sensorPath, path)
+        data, intrinsics = read(self.sensor_path, path)
         return data, intrinsics
 
-    def takeSnapShot(self, path, compresslevel=0):
+    def take_snapshot(self, path, compresslevel=0):
         """
         Take a snapshot of the sensor data.
 
@@ -168,24 +168,24 @@ class SensorReader:
         compresslevel = compresslevel
 
         if self.first and self.has_metaFile:
-            snapShotFile = os.path.join(path, self.sensorName + "_metadata")
+            snapShotFile = os.path.join(path, self.sensor_name + "_metadata")
             if compresslevel == 0:
-                shutil.copy2(f'{self.sensorPath}/metadata.zip', f'{snapShotFile}.zip')
+                shutil.copy2(f'{self.sensor_path}/metadata.zip', f'{snapShotFile}.zip')
             else:
-                with zipfile.ZipFile(f'{self.sensorPath}/metadata.zip', 'r') as myZip:
+                with zipfile.ZipFile(f'{self.sensor_path}/metadata.zip', 'r') as myZip:
                     files = myZip.namelist()
                     with zipfile.ZipFile(f'{snapShotFile}.zip', 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=compresslevel) as compressed:
                         for file in files:
                             compressed.writestr(file, myZip.read(file))
             self.first = False
 
-        snapShotFile = f'{path}{timestamp}_{self.sensorName}'
+        snapShotFile = f'{path}{timestamp}_{self.sensor_name}'
 
         if self.has_zip:
             if compresslevel == 0:
-                shutil.copy2(f'{self.sensorPath}/measurement.zip', f'{snapShotFile}.zip')
+                shutil.copy2(f'{self.sensor_path}/measurement.zip', f'{snapShotFile}.zip')
             else:
-                with zipfile.ZipFile(f'{self.sensorPath}/measurement.zip', 'r') as myZip:
+                with zipfile.ZipFile(f'{self.sensor_path}/measurement.zip', 'r') as myZip:
                     files = myZip.namelist()
                     with zipfile.ZipFile(f'{snapShotFile}.zip', 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=compresslevel) as compressed:
                         for file in files:
@@ -197,7 +197,7 @@ class SensorReader:
             for name in self.filenames:
                 if "metadata" in name:
                     continue
-                filePath = os.path.join(self.sensorPath, name)
+                filePath = os.path.join(self.sensor_path, name)
                 if os.path.exists(filePath + '.zip'):
                     continue
                 elif name.endswith(".zip"):
@@ -206,21 +206,22 @@ class SensorReader:
                     for root, dirs, files in os.walk(filePath):
                         for file in files:
                             fn = Path(root, file)
-                            afn = fn.relative_to(self.sensorPath)
+                            afn = fn.relative_to(self.sensor_path)
                             if os.path.exists(fn):
                                 zipArchive.write(filename=fn, arcname=afn)
                             else:
                                 zipArchive.write(filename=filePath, arcname=name)
             return True
 
-    def updateAttributes(self):
+    def update_attributes(self):
         """
-        Update attributes for the SensorReader object.
+        Update attribute array for the SensorReader object. Can be used to detec new
+        variables if they were not available at start up
         """
-        self.attributes = os.listdir(self.sensorPath)
-        self.init_attributes()
+        self.attributes = os.listdir(self.sensor_path)
+        self._init_attributes()
 
-    def getValue(self, name):
+    def get_value(self, name):
         """
         Get the value of the given attribute.
 
@@ -230,11 +231,14 @@ class SensorReader:
         Returns:
         Any: Value of the attribute.
         """
-        return read(os.path.join(self.sensorPath, name))
+        if name =="attributes":
+            return self.attributes
+        return read(os.path.join(self.sensor_path, name))
 
-    def getBinary(self, name):
+    def get_binary(self, name):
         """
         Get the binary data of the given attribute.
+        Reads the file without decoding it. Useful when tranferring data to other machines
 
         Parameters:
         name (str): Attribute name.
@@ -245,17 +249,17 @@ class SensorReader:
         if name in ("metadata", "metaData"):
             name = "metadata.zip"
         try:
-            with open(self.getValueFilePath(name), 'rb') as file:
+            with open(self.get_valueFilePath(name), 'rb') as file:
                 return file.read(-1)
         except:
             try:
-                with open(self.getValueFilePath(name + ".zip"), 'rb') as file:
+                with open(self.get_valueFilePath(name + ".zip"), 'rb') as file:
                     return file.read(-1)
             except:
-                with open(self.getValueFilePath(name[:-4] + ".jpg"), 'rb') as file:
+                with open(self.get_valueFilePath(name[:-4] + ".jpg"), 'rb') as file:
                     return file.read(-1)
 
-    def getValueFilePath(self, name):
+    def get_value_path(self, name):
         """
         Get the file path for the given attribute.
 
@@ -265,11 +269,11 @@ class SensorReader:
         Returns:
         str: File path of the attribute.
         """
-        return os.path.join(self.sensorPath, name)
+        return os.path.join(self.sensor_path, name)
 
-    def startWrite(self, datadir=None):
+    def start_write(self, datadir=None):
         """
-        Start writing sensor data.
+        Start writing sensor data to hard disk. Used when creating datasets for later use
 
         Parameters:
         datadir (str, optional): Directory to store data. Defaults to None.
@@ -277,27 +281,28 @@ class SensorReader:
         self.first = True
         self.init_watchdog(datadir)
 
-    def writerWorker(self, datadir=None):
+    def _writer_worker(self, datadir=None):
         """
-        Worker function to write sensor data.
+        Takes snapshots of data. Used for creating datasets
 
         Parameters:
         datadir (str, optional): Directory to store data. Defaults to None.
         """
-        if self.waitEvent.is_set():
+        if self.wait_event.is_set():
             return
         ts = time.time()
         time_step = time.time() - self.prev_ts
-        if time_step < self.waitTime:
-            self.waitEvent.set()
-            time.sleep(self.waitTime - time_step)
-            self.waitEvent.clear()
+        if time_step < self.wait_time:
+            self.wait_event.set()
+            time.sleep(self.wait_time - time_step)
+            self.wait_event.clear()
         self.prev_ts = time.time()
-        self.takeSnapShot(datadir, compress=True)
+        self.take_snapshot(datadir, compress=True)
 
-    def init_watchdog(self, datadir):
+    def init_watchdog(self, datadir=None):
         """
-        Initialize the watchdog to monitor changes in sensor data.
+        Initialize the watchdog to monitor changes in sensor data. When new data arrives
+        Write it to given path
 
         Parameters:
         datadir (str, optional): Directory to store data. Defaults to self.datadir.
@@ -316,11 +321,11 @@ class SensorReader:
                     return
                 basename = os.path.basename(event.src_path)
                 if basename == self.parent.to_watch:
-                    self.parent.writerWorker(datadir)
+                    self.parent._writer_worker(datadir)
 
         self.observer = Observer()
         eh = EventHandler(self)
-        self.observer.schedule(eh, self.sensorPath, recursive=True)
+        self.observer.schedule(eh, self.sensor_path, recursive=True)
         self.observer.start()
 
     def stop_watchdog(self):
@@ -329,7 +334,7 @@ class SensorReader:
         """
         try:
             self.observer.stop()
-            self.waitEvent.clear()
+            self.wait_event.clear()
             del self.observer
             self.observer = Observer()
 
@@ -338,14 +343,14 @@ class SensorReader:
 
     def get_packed_data_location(self):
         """
-        Get the location of packed data.
+        Get the location of packed data. Useful if user wants the whole measurement.
 
         Returns:
         str: Location of packed data.
         """
         if self.has_zip:
-            return os.path.join(self.sensorPath,'measurement.zip')
-        return self.sensorPath
+            return os.path.join(self.sensor_path,'measurement.zip')
+        return self.sensor_path
 
     def get_metadata_location(self):
         """
@@ -355,8 +360,8 @@ class SensorReader:
         str: Location of metadata.
         """
         if self.has_metaFile:
-           return os.path.join(self.sensorPath,'metadata.zip')
-        return self.sensorPath
+           return os.path.join(self.sensor_path,'metadata.zip')
+        return self.sensor_path
 
     def attach_watchdog(self, value_to_watch, callback):
         """
@@ -366,7 +371,7 @@ class SensorReader:
         value_to_watch (str): Value to watch for changes.
         callback (function): Callback function to execute when changes are detected.
         """
-        path = self.getValueFilePath(value_to_watch)
+        path = self.get_value_path(value_to_watch)
         dirpath, basename = os.path.split(path)
 
         class EventHandler(FileSystemEventHandler):
@@ -404,7 +409,7 @@ class SensorReader:
 
 def read(filename, attribute=None):
     """
-    Read data from the specified file.
+    Read and decode data from the specified file.
 
     Parameters:
     filename (str): File name.
@@ -431,10 +436,10 @@ def read(filename, attribute=None):
                     #populate directory recursevely
                     r[part] = r.get(part, {})
                     r = r[part]
-                decoder = cbor2.CBORDecoder(zf.open(file), tag_hook=decodeTags)
+                decoder = cbor2.CBORDecoder(zf.open(file), tag_hook=decode_tags)
                 r[path[-1]] = decoder.decode()
             return ret
 
     with open(filename, 'rb') as fd:
-        decoder = cbor2.CBORDecoder(fd, tag_hook=decodeTags)
+        decoder = cbor2.CBORDecoder(fd, tag_hook=decode_tags)
         return decoder.decode()

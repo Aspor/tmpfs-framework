@@ -13,7 +13,8 @@ from typing import Any
 from threading import Event
 from pathlib import Path
 
-from .cbor_utils import write_cbor, get_temp_file, tmpfsPath
+from .cbor_utils import write_cbor, get_temp_file
+import tmpfs_framework
 
 
 class SensorWriter():
@@ -21,12 +22,12 @@ class SensorWriter():
   A class to handle writing sensor data to files and compressing them.
 
   Attributes:
-  tmpfsPath (str): Temporary file system path.
-  hdfFile (str): Path to the directory where data is stored.
+  tmpfs_path (str): Temporary file system path.
+  data_path (str): Path to the directory where data is stored.
   filename (str): Name of the file or directory.
   stop_event (Event): Event to control stopping of write loop.
   """
-  def __init__(self, dirPath: str, filename: str) -> None:
+  def __init__(self, dir: str, filename: str, tmpfs_path=None) -> None:
     """
     Initializes SensorWriter with directory path and filename.
 
@@ -34,11 +35,11 @@ class SensorWriter():
     dirPath (str): Directory path for storing data.
     filename (str): Name of the file or directory.
     """
-    self.tmpfsPath = tmpfsPath
-    d = f'{self.tmpfsPath}/{dirPath}/'
+    self.tmpfs_path = tmpfs_path if tmpfs_path is not None else tmpfs_framework.TMPFS_PATH
+    d = f'{self.tmpfs_path}/{dir}/'
     os.makedirs(d,exist_ok=True)
-    self.hdfFile = d+filename
-    Path(self.hdfFile).mkdir(parents=True,exist_ok=True)
+    self.data_path = d+filename
+    Path(self.data_path).mkdir(parents=True,exist_ok=True)
 
     self.filename=filename
     self.stop_event=Event()
@@ -56,7 +57,7 @@ class SensorWriter():
     """
     self.stop_event.set()
 
-  def write_loop(self, wait: float = None) -> None:
+  def _write_loop(self, wait: float = None) -> None:
     """
     Placeholder method for the write loop.
 
@@ -79,11 +80,11 @@ class SensorWriter():
       for d in data:
         self.write(os.path.join(name,str(d)),data[d])
     else:
-      write_cbor(os.path.join( self.hdfFile,name),data)
+      write_cbor(os.path.join(self.data_path, name), data)
     if attributes is not None:
-      self.write(name+"_attr",attributes)
+      self.write(name+"_attr", attributes)
 
-  def writeZip(self, name:str, data: Any, compress: bool = False, keep: bool = False) -> None:
+  def write_zip(self, name:str, data: Any, compress: bool = False, keep: bool = False) -> None:
     """
     Writes data and compresses it into a zip file.
 
@@ -93,22 +94,22 @@ class SensorWriter():
     compress (bool): Whether to compress the zip file.
     keep (bool): Whether to keep the original files.
     """
-    self.write(name,data)
-    p=os.path.join(self.hdfFile,name)
+    self.write(name, data)
+    p=os.path.join(self.data_path, name)
 
     compression=zipfile.ZIP_DEFLATED
     if(not compress):
       compression=zipfile.ZIP_STORED
     tmpF=get_temp_file()
-    with zipfile.ZipFile(f'{tmpF}.zip','w',compression=compression,compresslevel=3) as z:
-          for root, _, files in os.walk(os.path.join(self.hdfFile,name)):
+    with zipfile.ZipFile(f'{tmpF}.zip' ,'w' ,compression=compression ,compresslevel=3) as zf:
+          for root, _, files in os.walk(os.path.join(self.data_path,name)):
             for file in files:
               fn=Path(root, file)
-              afn=fn.relative_to(self.hdfFile)
-              z.write(filename=fn,arcname=afn)
-            # shutil.copy2(f'{self.hdfFile}/{f}',f'{p}/{f}')
+              afn=fn.relative_to(self.data_path)
+              zf.write(filename=fn, arcname=afn)
+            # shutil.copy2(f'{self.data_path}/{f}',f'{p}/{f}')
     if not keep:
-      shutil.rmtree(os.path.join(self.hdfFile,name),ignore_errors=True)
+      shutil.rmtree(os.path.join(self.data_path,name), ignore_errors=True)
     os.rename(f'{tmpF}.zip',f'{p}.zip')
 
 
