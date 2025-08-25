@@ -6,7 +6,7 @@ import threading
 
 from time import sleep
 
-from tmpfs_framework.sensorWriter import SensorWriter
+from tmpfs_framework import SensorWriter
 
 
 

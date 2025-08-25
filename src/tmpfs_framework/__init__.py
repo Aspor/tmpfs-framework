@@ -1,4 +1,4 @@
 TMPFS_PATH = '/home/robot/tmp/'
 
-from .sensorReader import SensorReader
-from .sensorWriter import SensorWriter
+from .sensor_reader import SensorReader
+from .sensor_writer import SensorWriter

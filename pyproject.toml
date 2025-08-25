@@ -3,7 +3,7 @@ requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tmpfs-framework"
+name = "tmpfs_framework"
 version = "0.0.1"
 authors = [
   { name="Timo Mäenpää", email="timo.maenpaa@oulu.fi"},

@@ -2,13 +2,13 @@ import os
 from time import sleep
 
 import tmpfs_framework
-from tmpfs_framework import sensorReader
+from tmpfs_framework import SensorReader
 
 
 class Object(object):
     pass
 
-class WifiReader(sensorReader.SensorReader):
+class WifiReader(SensorReader):
   def __init__ (self, directory='wifilogger', name=None, *args,**kwargs):
     if(name is None or type(name) is int ):
       if(name is None):
@@ -18,12 +18,6 @@ class WifiReader(sensorReader.SensorReader):
 
     super().__init__(directory=directory,filename=name,*args,**kwargs)
     self.to_watch = "wireless_status"
-
-
-
-
-
-
 
 if __name__=="__main__":
     import matplotlib.pyplot as plt
