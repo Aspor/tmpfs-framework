@@ -4,12 +4,8 @@ from time import sleep
 import tmpfs_framework
 from tmpfs_framework import SensorReader
 
-
-class Object(object):
-    pass
-
-class WifiReader(SensorReader):
-  def __init__ (self, directory='wifilogger', name=None, *args,**kwargs):
+class NetworkStatsReader(SensorReader):
+  def __init__ (self, directory='network_stats', name=None, *args,**kwargs):
     if(name is None or type(name) is int ):
       if(name is None):
         name=-1
@@ -27,7 +23,7 @@ if __name__=="__main__":
 
     inteface = sys.argv[1] if len(sys.argv)>1 else None
 
-    plotter = WifiReader(sensorName="wifi", name=inteface)
+    plotter = NetworkStatsReader(sensorName="network_stats", name=inteface)
 
     for v in plotter.attributes:
         print(f"{v}: ")

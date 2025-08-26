@@ -10,9 +10,9 @@ from tmpfs_framework import SensorWriter
 
 
 
-class wifiLogger(SensorWriter):
+class NetworkStatLogger(SensorWriter):
 
-    def __init__(self, dirPath='wifilogger', filename='.', **kwargs):
+    def __init__(self, dirPath='network_stats', filename='.', **kwargs):
         super().__init__(dirPath,filename)
 
         #Hard coded fields because parsing /proc/net/ file header is split to two lines
@@ -87,6 +87,6 @@ def parse_file(filename,fieldnames, wireless=False):
   return data_dict
 
 if __name__=="__main__":
-    logger = wifiLogger()
+    logger = NetworkStatLogger()
     logger.workerThread.start()
     logger.workerThread.join()
