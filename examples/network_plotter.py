@@ -25,17 +25,17 @@ if __name__=="__main__":
 
     plotter = NetworkStatsReader(sensorName="network_stats", name=inteface)
 
+    #Read and print current values
     for v in plotter.attributes:
         print(f"{v}: ")
         print( plotter.get_value(v))
         #It's also possible to use __getattribute__:
         print(plotter.__getattribute__(v))
 
-    lenght=25
-    y = deque(maxlen=lenght)
-    x = deque(maxlen=lenght)
+    plot_lenght=25
+    y = deque(maxlen=plot_lenght)
+    x = deque(maxlen=plot_lenght)
 
-    i=0
     def updateGraph(frame ):
         #Variables raed from tmpfs can be read normally:
         y.append(plotter.transmit_bytes)
