@@ -246,17 +246,18 @@ class SensorReader:
         Returns:
         bytes: Binary data of the attribute.
         """
+        print(name)
         if name in ("metadata", "metaData"):
             name = "metadata.zip"
         try:
-            with open(self.get_valueFilePath(name), 'rb') as file:
+            with open(self.get_value_path(name), 'rb') as file:
                 return file.read(-1)
         except:
             try:
-                with open(self.get_valueFilePath(name + ".zip"), 'rb') as file:
+                with open(self.get_value_path(name + ".zip"), 'rb') as file:
                     return file.read(-1)
             except:
-                with open(self.get_valueFilePath(name[:-4] + ".jpg"), 'rb') as file:
+                with open(self.get_value_path(name[:-4] + ".jpg"), 'rb') as file:
                     return file.read(-1)
 
     def get_value_path(self, name):
@@ -297,7 +298,7 @@ class SensorReader:
             time.sleep(self.wait_time - time_step)
             self.wait_event.clear()
         self.prev_ts = time.time()
-        self.take_snapshot(datadir, compress=True)
+        self.take_snapshot(datadir, compresslevel=3)
 
     def init_watchdog(self, datadir=None):
         """
