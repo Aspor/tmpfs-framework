@@ -297,7 +297,7 @@ class SensorReader:
             time.sleep(self.wait_time - time_step)
             self.wait_event.clear()
         self.prev_ts = time.time()
-        self.take_snapshot(datadir, compress=True)
+        self.take_snapshot(datadir, compresslevel=3)
 
     def init_watchdog(self, datadir=None):
         """
