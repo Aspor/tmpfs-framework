@@ -428,17 +428,20 @@ def read(filename, attribute=None):
 
     if filename.endswith('.zip'):
         with zipfile.ZipFile(filename, 'r') as zf:
-            names = zf.namelist()
+            archive_content = zf.infolist()
             ret = {}
-            for file in names:
-                path = file.split('/')
+            for file in archive_content:
+                path = file.filename.split('/')
                 r = ret
                 for part in path[1:-1]:
                     #populate directory recursevely
                     r[part] = r.get(part, {})
                     r = r[part]
+                if file.is_dir():
+                  continue
                 decoder = cbor2.CBORDecoder(zf.open(file), tag_hook=decode_tags)
                 r[path[-1]] = decoder.decode()
+
             return ret
 
     with open(filename, 'rb') as fd:

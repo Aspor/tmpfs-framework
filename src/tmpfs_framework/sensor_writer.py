@@ -16,6 +16,7 @@ from pathlib import Path
 from .cbor_utils import write_cbor, get_temp_file
 import tmpfs_framework
 
+import logging
 
 class SensorWriter():
     """
@@ -36,9 +37,9 @@ class SensorWriter():
         filename (str): Name of the file or directory.
         """
         self.tmpfs_path = tmpfs_path if tmpfs_path is not None else tmpfs_framework.TMPFS_PATH
-        d = f'{self.tmpfs_path}/{dir}/'
+        d = os.path.join(self.tmpfs_path,dir)
         os.makedirs(d,exist_ok=True)
-        self.data_path = d+filename
+        self.data_path =os.path.join(d,filename)
         Path(self.data_path).mkdir(parents=True,exist_ok=True)
 
         self.filename=filename
@@ -76,11 +77,13 @@ class SensorWriter():
         data (any): Data to be written.
         attributes (dict, optional): Attributes to be written.
         """
+
         if type (data) is dict:
             for d in data:
-                self.write(os.path.join(name,str(d)),data[d])
+                self.write(name = os.path.join(name,str(d)), data = data[d])
         else:
-            write_cbor(os.path.join(self.data_path, name), data)
+            write_cbor(filename = os.path.join(self.data_path, name), data = data)
+
         if attributes is not None:
             self.write(name+"_attr", attributes)
 
@@ -95,22 +98,22 @@ class SensorWriter():
         keep (bool): Whether to keep the original files.
         """
         self.write(name, data)
-        p=os.path.join(self.data_path, name)
+        final_path=os.path.join(self.data_path, name)
 
         compression=zipfile.ZIP_DEFLATED
         if(not compress):
             compression=zipfile.ZIP_STORED
         tmpF=get_temp_file()
         with zipfile.ZipFile(f'{tmpF}.zip' ,'w' ,compression=compression ,compresslevel=3) as zf:
-                    for root, _, files in os.walk(os.path.join(self.data_path,name)):
+                    for root, _, files in os.walk(final_path):
                         for file in files:
                             fn=Path(root, file)
                             afn=fn.relative_to(self.data_path)
                             zf.write(filename=fn, arcname=afn)
                         # shutil.copy2(f'{self.data_path}/{f}',f'{p}/{f}')
         if not keep:
-            shutil.rmtree(os.path.join(self.data_path,name), ignore_errors=True)
-        os.rename(f'{tmpF}.zip',f'{p}.zip')
+            shutil.rmtree(final_path, ignore_errors=True)
+        os.rename(f'{tmpF}.zip',f'{final_path}.zip')
 
 
 
@@ -125,8 +128,8 @@ def pack_to_zip(files: list[str], base_dir:str = ".", zipname:str = "measurement
         zipname (str): Name of the output zip file.
         compress (bool): Whether to compress the zip file.
         """
-        path = zipname
         root = base_dir#os.path.dirname(zipname)
+        path = zipname
 
         compression=zipfile.ZIP_DEFLATED
         if(not compress):
@@ -139,4 +142,5 @@ def pack_to_zip(files: list[str], base_dir:str = ".", zipname:str = "measurement
                             afn=file
                             z.write(filename=fn,arcname=afn)
         path = os.path.join(root,path)
+
         os.rename(f'{tmpF}.zip',f'{path}.zip')
