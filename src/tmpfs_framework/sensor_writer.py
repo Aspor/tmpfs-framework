@@ -39,8 +39,8 @@ class SensorWriter():
         self.tmpfs_path = tmpfs_path if tmpfs_path is not None else tmpfs_framework.TMPFS_PATH
         d = os.path.join(self.tmpfs_path,dir_path)
         os.makedirs(d,exist_ok=True)
-        self.dir_path =os.path.join(d,filename)
-        Path(self.dir_path).mkdir(parents=True,exist_ok=True)
+        self.data_path =os.path.join(d,filename)
+        Path(self.data_path).mkdir(parents=True,exist_ok=True)
 
         self.filename=filename
         self.stop_event=Event()
