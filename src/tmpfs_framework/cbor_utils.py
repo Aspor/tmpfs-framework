@@ -149,7 +149,6 @@ def get_temp_file(N=5,tmpfs_path=None):
     Returns:
     str: Path to the temporary file.
     """
-    print(tmpfs_path)
     tmpdir = tmpfs_path if tmpfs_path is not None else tmpfs_framework.TMPFS_PATH
 
     #tmpdir = tmpfs_path

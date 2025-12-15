@@ -1,5 +1,22 @@
 # tmpfs-framework
-Python implementation of "A tmpfs Based Middleware For Robotics Applications"
+
+Robots need to handle tasks like sensing the environment, planning actions, and controlling movement. Doing all this in one big program makes things complicated and hard to change. A better way is to split the system into smaller parts that talk to each other using interprocess communication (IPC).
+
+The tmpfs framework is a simple IPC solution for Linux. It uses temporary files in memory (tmpfs) to share data between programs. Data is stored in files with clear names, and  Concise Binary Object Representation (CBOR) is used for efficient binary serialization, including support for arrays and images. The framework is lightweight, works on most Linux systems, and makes it easy to add new sensors or actuators without rigid message formats.
+
+
+Why it’s useful:
+
+- Easy to set up
+- Portable across Linux
+- Self-describing data
+- Supports “publish and forget” communication
+
+While not necessary suitable for hard real-time applications, tmpfs-based IPC can perform well in scenarios requiring modularity, transparency, and ease of integration.
+
+
+# Python implementation of "A tmpfs Based Middleware For Robotics Applications"
+
 
 Allows one way communication between two separate python process via Linux's tmpfs. Future implemantion will add two way communication.
 
@@ -8,7 +25,7 @@ Requiremets:
 * cbor2>=5.4.6
 * numpy>=1.21.5
 * watchdog>=2.1.6
-* Linux 
+* Linux
 
 ## Build and install using pythons build module and pip:
 Requiremets:
