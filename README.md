@@ -1,110 +1,59 @@
 # tmpfs-framework
-Package to read senor data from tmpfs and to create a watchdog to take snapshots from the data.
+
+Robots need to handle tasks like sensing the environment, planning actions, and controlling movement. Doing all this in one big program makes things complicated and hard to change. A better way is to split the system into smaller parts that talk to each other using interprocess communication (IPC).
+
+The tmpfs framework is a simple IPC solution for Linux. It uses temporary files in memory (tmpfs) to share data between programs. Data is stored in files with clear names, and  Concise Binary Object Representation (CBOR) is used for efficient binary serialization, including support for arrays and images. The framework is lightweight, works on most Linux systems, and makes it easy to add new sensors or actuators without rigid message formats.
+
+
+Why it’s useful:
+
+- Easy to set up
+- Portable across Linux
+- Self-describing data
+- Supports “publish and forget” communication
+
+While not necessary suitable for hard real-time applications, tmpfs-based IPC can perform well in scenarios requiring modularity, transparency, and ease of integration.
+
+
+# Python implementation of "A tmpfs Based Middleware For Robotics Applications"
+
+
+Allows one way communication between two separate python process via Linux's tmpfs. Future implemantion will add two way communication.
 
 Requiremets:
 
-cbor2>=5.4.6
-
-numpy>=1.21.5
-
-watchdog>=2.1.6
-
+* cbor2>=5.4.6
+* numpy>=1.21.5
+* watchdog>=2.1.6
+* Linux
 
 ## Build and install using pythons build module and pip:
+Requiremets:
+* hatchling
 
         python3 -m build
         python3 -m pip install dist/tmpfs_framework-0.0.1-py3-none-any.whl
 
+## Usage
+In example directory there are some example code showcasing usage.
+Default tmpfs path is set to /home/robot/tmp/ this can be changed by setting TMPFS_PATH variable in tmpfs_framework module
+```
+import tmpfs_framework
+TMPFS_PATH = "/path/to/tmpfs"
+```
 
-## Explanation of the purpose of each function in the SensorReader class and the read function:
 
-**__init__:**
+### tmpfs
 
-Initializes the SensorReader object with the specified parameters.
-Sets up the directory paths, filenames, and sensor attributes.
-Checks for the presence of measurement and metadata files.
-Initializes multiprocessing events and attributes.
+Create a tmpfs to use:
 
-**init_attributes:**
+        mount -t tmpfs tmpfs   /path/to/tmpfs/
 
-Initializes the attributes for the SensorReader object.
-Creates getter functions for each attribute and sets them as properties of the class.
+See
+https://www.kernel.org/doc/html/latest/filesystems/tmpfs.html for more details how to create a tmpfs
 
-**attribute_function:**
 
-Creates a getter function for the specified attribute.
-The function reads the value of the attribute from the temporary filesystem as a numpy array.
+## CITING
+If you use this work in your research please cite the following paper:
 
-**get_data:**
-
-Retrieves data from the sensor.
-Reads the data and intrinsics from the specified path.
-
-**takeSnapShot:**
-
-Takes a snapshot of the sensor data.
-Saves the snapshot to the specified path, with an option to compress the data.
-
-**updateAttributes:**
-
-Updates the attributes for the SensorReader object.
-Reinitializes the attributes by reading the directory contents.
-
-**getValue:**
-
-Retrieves the value of the specified attribute.
-Reads the data from the file corresponding to the attribute.
-
-**getBinary:**
-
-Retrieves the binary data of the specified attribute.
-Reads the binary data from the file, handling different file extensions.
-
-**getValueFilePath:**
-
-Constructs the file path for the specified attribute.
-Returns the full path to the attribute file.
-
-**startWrite:**
-
-Starts the process of writing sensor data.
-Initializes the watchdog to monitor changes in the sensor data directory.
-
-**writerWorker:**
-
-Worker function that writes sensor data.
-Takes a snapshot of the data at regular intervals.
-
-**init_watchdog:**
-
-Initializes the watchdog to monitor changes in the sensor data directory.
-Sets up an event handler to trigger the writerWorker function when changes are detected.
-
-**stop_watchdog:**
-
-Stops the watchdog monitoring.
-Clears the wait event and deletes the observer.
-
-**get_packed_data_location:**
-
-Returns the location of the packed data (measurement.zip) if it exists.
-
-**get_metadata_location:**
-
-Returns the location of the metadata (metadata.zip) if it exists.
-
-**attach_watchdog:**
-
-Attaches a watchdog to monitor changes in the specified value.
-Executes a callback function when changes are detected.
-
-**disable_watchdog:**
-
-Disables the watchdog monitoring the specified value.
-Stops and deletes the observer.
-
-**read:**
-
-Reads data from the specified file.
-Handles reading from directories, zip files, and regular files.
-Decodes the data using the CBOR decoder.
+`Mäenpää, T., Tikanmäki, A., Röning, J. (2025). A tmpfs-Based Middleware for Robotics Applications. In: Arai, K. (eds) Intelligent Systems and Applications. IntelliSys 2025. Lecture Notes in Networks and Systems, vol 1567. Springer, Cham. https://doi.org/10.1007/978-3-032-00071-2_35`
