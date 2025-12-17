@@ -1,3 +1,5 @@
+[![Unit tests](https://github.com/Aspor/tmpfs-framework/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/Aspor/tmpfs-framework/actions/workflows/python-app.yml)
+
 # tmpfs-framework
 
 Robots need to handle tasks like sensing the environment, planning actions, and controlling movement. Doing all this in one big program makes things complicated and hard to change. A better way is to split the system into smaller parts that talk to each other using interprocess communication (IPC).
