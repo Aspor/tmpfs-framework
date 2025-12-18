@@ -114,7 +114,6 @@ def _numpy_encoder(encoder, value):
     None
     """
     value = np.asanyarray(value)
-    #print(f"{value.shape=}, {value=}")
     if len(value.shape)<2:
         encoder.encode_semantic(cbor2.CBORTag(_tag_map[value.dtype],value.data.tobytes()) )
     else:

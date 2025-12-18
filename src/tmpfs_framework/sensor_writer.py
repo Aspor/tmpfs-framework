@@ -25,24 +25,24 @@ class SensorWriter():
     Attributes:
     tmpfs_path (str): Temporary file system path.
     data_path (str): Path to the directory where data is stored.
-    filename (str): Name of the file or directory.
+    sensor_name (str): Identifier of sensor.
     stop_event (Event): Event to control stopping of write loop.
     """
-    def __init__(self, dir_path: str, filename: str, tmpfs_path=None) -> None:
+    def __init__(self, dir_path: str, sensor_name: str, tmpfs_path=None) -> None:
         """
         Initializes SensorWriter with directory path and filename.
 
         Args:
         dir_path (str): Directory path for storing data.
-        filename (str): Name of the file or directory.
+        sensor_name (str): Name of the file or directory.
         """
         self.tmpfs_path = tmpfs_path if tmpfs_path is not None else tmpfs_framework.TMPFS_PATH
         d = os.path.join(self.tmpfs_path,dir_path)
         os.makedirs(d,exist_ok=True)
-        self.data_path =os.path.join(d,filename)
+        self.data_path =os.path.join(d,sensor_name)
         Path(self.data_path).mkdir(parents=True,exist_ok=True)
 
-        self.filename=filename
+        self.sensor_name=sensor_name
         self.stop_event=Event()
 
 

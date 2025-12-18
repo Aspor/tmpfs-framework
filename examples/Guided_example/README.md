@@ -32,7 +32,7 @@ Implement a dummy writer. With actual sensor writer_worker should be called peri
 >>> class DummyWriter(SensorWriter):
 ...     def __init__(self, filename):
 ...         super().__init__("dummy", filename)
-
+...
 ...     def writer_worker(self, number):
 ...         self.write("number", number)
 ...         self.write("number_x2", number * 2)

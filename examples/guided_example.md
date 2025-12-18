@@ -26,7 +26,7 @@ Import required classes and methods
 
 ```
 
-Implement a dummy writer. With actual sensor writer_worker should be called periodically or when new data is aquired. In this example it is called when needed
+Implement a dummy writer. With actual sensor writer_worker should be called periodically or when new data is acquired. In this example it is called when needed
 ```python
 
 >>> class DummyWriter(SensorWriter):
@@ -178,7 +178,7 @@ Check the number of snapshots taken
 
 ```
 
-Check the content of dataset. Files are sorted because os.listdir doesn't quarantee any order
+Check the content of dataset. Files are sorted because os.listdir doesn't guarantee any order
 
 ```python
 >>> zip_files = sorted(os.listdir(dataset_path))

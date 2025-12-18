@@ -71,8 +71,8 @@ class SensorReader:
             elif len(files)>0:
                 to_watch = files[0]
                 for fn in files:
-                    #print(fn, os.path.isfile(os.path.join(self.sensorPath,fn)))
-                    if os.path.isfile(os.path.join(self.sensorPath,fn)):
+                    #print(fn, os.path.isfile(os.path.join(self.sensor_path,fn)))
+                    if os.path.isfile(os.path.join(self.sensor_path,fn)):
                         to_watch = fn
                     break
                 self.to_watch=to_watch
@@ -88,12 +88,12 @@ class SensorReader:
 
 
 
-        self.waitTime = 0.01
+        self.wait_time = 0.01
         #self.workerThread = multiprocessing.Process(target=self.writerWorker)
-        self.saveEvent = multiprocessing.Event()
-        self.saveEvent.clear()
-        self.waitEvent = multiprocessing.Event()
-        self.waitEvent.clear()
+        self.save_event = multiprocessing.Event()
+        self.save_event.clear()
+        self.wait_event = multiprocessing.Event()
+        self.wait_event.clear()
         self.first = False
         self.prev_stat = os.stat(self.sensor_path)
         self.prev_ts = time.time()
@@ -182,7 +182,7 @@ class SensorReader:
         """
         if path[-1] != '/':
             path += '/'
-        timestamp=str(int(os.stat(os.path.join(self.sensorPath,self.to_watch)).st_mtime_ns/1e6)) # in milliseconds
+        timestamp=str(int(os.stat(os.path.join(self.sensor_path,self.to_watch)).st_mtime_ns/1e6)) # in milliseconds
         #timestamp = str(int(time.time_ns() / 1e6))  # in milliseconds
         compresslevel = compresslevel
 
