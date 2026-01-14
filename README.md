@@ -62,7 +62,6 @@ https://www.kernel.org/doc/html/latest/filesystems/tmpfs.html for more details h
 If you found a bug or want a new feature feel free to open a issue in this GitHub repository.
 
 Or if you improve the framework and want to share you can create a pull request
-https://www.kernel.org/doc/html/latest/filesystems/tmpfs.html for more details how to create a tmpfs
 
 
 ## Citing
