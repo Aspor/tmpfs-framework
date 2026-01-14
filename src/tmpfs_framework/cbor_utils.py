@@ -114,7 +114,6 @@ def _numpy_encoder(encoder, value):
     None
     """
     value = np.asanyarray(value)
-    #print(f"{value.shape=}, {value=}")
     if len(value.shape)<2:
         encoder.encode_semantic(cbor2.CBORTag(_tag_map[value.dtype],value.data.tobytes()) )
     else:
@@ -149,7 +148,6 @@ def get_temp_file(N=5,tmpfs_path=None):
     Returns:
     str: Path to the temporary file.
     """
-    print(tmpfs_path)
     tmpdir = tmpfs_path if tmpfs_path is not None else tmpfs_framework.TMPFS_PATH
 
     #tmpdir = tmpfs_path

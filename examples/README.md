@@ -1,13 +1,21 @@
 # Examples
 
+
+## Guided example
+
+Walks through creating a dummy sensor writer and demonstrates some basic concepts and features
+
+## Webcam example
+
+1. Example with sensor that is easy to acquire and give a starting point for adding new types of sensors.
+2. Give idea of latency in tmpfs-framework
+   - Images are written to tmpfs and later read from there for shape detection this causes delay that can be seen by moving detected objects or webcam
+3. Demonstrates idea of having data processing module that generates new data from existing.
+    - This allows implementing a whiteboard system where some processes provide raw data and other processes process the data to generate additional information
+
+
+
+
 ## Network monitoring
 
-Demostrates how to implement a thread based writer and reader object with device available to most users
-
-Requirements: matplotlib
-
-**networkLogger.py** reads statistics from files /proc/net/, parses them and writes corresponding data to tmpfs path set by the user.
-**networkPlotter.py** reads the same data from tmpfs path, prints current values and start drawing a plot of total transmitted bytes using matplotlib. Shows three different ways to acces the data on tmpfs:
-1. By calling get_value()
-2. By calling \_\_get_attribute\_\_()
-3. By directly accessing with object.variable
+Demonstrates how to implement a thread based writer and reader object with device available to most users

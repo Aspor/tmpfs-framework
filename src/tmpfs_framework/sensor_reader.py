@@ -29,7 +29,7 @@ class SensorNotInitializedError(Exception):
     pass
 
 class SensorReader:
-    def __init__(self, directory, filename=None, sensor_name=None, datadir="collected_data/",
+    def __init__(self, directory, filename=None, sensor_name=None, data_dir="collected_data/",
                   to_watch="measurement.zip", tmpfs_path = None, **kwargs):
         """
         Initialize the SensorReader object.
@@ -38,11 +38,11 @@ class SensorReader:
         directory (str): Directory path where sensor data is stored.
         filename (str or int, optional): Filename of the sensor data. Defaults to None.
         sensor_name (str, optional): Name of the sensor. Defaults to None.
-        datadir (str, optional): Directory to store collected data. Defaults to "collected_data/".
+        data_dir (str, optional): Directory to store collected data. Defaults to "collected_data/".
         to_watch (str, optional): File to watch for changes. Defaults to "measurement.zip".
         """
         self.tmpfs_path = tmpfs_path if tmpfs_path is not None else tmpfs_framework.TMPFS_PATH
-        self.datadir = datadir
+        self.data_dir = data_dir
         d = os.path.join(self.tmpfs_path, directory)
 
         if filename is None or isinstance(filename, int):
@@ -64,27 +64,43 @@ class SensorReader:
             if os.path.isfile(os.path.join(self.sensor_path, 'metadata.zip')):
                 self.has_metaFile = True
             self.attributes = [file for file in self.attributes if "measurement" not in file and "metadata" not in file]
+
+            files =os.listdir(self.sensor_path)
+            if  to_watch in files:
+                self.to_watch = to_watch
+            elif len(files)>0:
+                to_watch = files[0]
+                for fn in files:
+                    #print(fn, os.path.isfile(os.path.join(self.sensor_path,fn)))
+                    if os.path.isfile(os.path.join(self.sensor_path,fn)):
+                        to_watch = fn
+                    break
+                self.to_watch=to_watch
+
         elif os.path.isfile(self.sensor_path):
             self.attributes = [filename]
+            self.to_watch=filename
         else:
             raise FileNotFoundError(f"No datafile found, {self.sensor_path}")
 
         if not self.attributes:
             raise SensorNotInitializedError(f"Measurements not initialized, {self.sensor_path}")
 
+
+
         self.wait_time = 0.01
-        self.worker_thread = multiprocessing.Process(target=self._writer_worker)
+        #self.workerThread = multiprocessing.Process(target=self.writerWorker)
         self.save_event = multiprocessing.Event()
         self.save_event.clear()
         self.wait_event = multiprocessing.Event()
         self.wait_event.clear()
         self.first = False
         self.prev_stat = os.stat(self.sensor_path)
-        self.to_watch = to_watch
         self.prev_ts = time.time()
         self.observers = {}
         self._init_attributes()
         self.observer = Observer()
+
 
     def _init_attributes(self):
         """
@@ -147,9 +163,11 @@ class SensorReader:
         Returns:
         tuple: Data and intrinsics.
         """
-        path = '/' + path
-        data, intrinsics = read(self.sensor_path, path)
-        return data, intrinsics
+        #path = '/' + path
+        #data, intrinsics = read(self.sensor_path, path)
+        data = read(self.sensor_path, path)
+
+        return data#, intrinsics
 
     def take_snapshot(self, path, compresslevel=0):
         """
@@ -164,7 +182,8 @@ class SensorReader:
         """
         if path[-1] != '/':
             path += '/'
-        timestamp = str(int(time.time_ns() / 1e6))  # in milliseconds
+        timestamp=str(int(os.stat(os.path.join(self.sensor_path,self.to_watch)).st_mtime_ns/1e6)) # in milliseconds
+        #timestamp = str(int(time.time_ns() / 1e6))  # in milliseconds
         compresslevel = compresslevel
 
         if self.first and self.has_metaFile:
@@ -246,7 +265,6 @@ class SensorReader:
         Returns:
         bytes: Binary data of the attribute.
         """
-        print(name)
         if name in ("metadata", "metaData"):
             name = "metadata.zip"
         try:
@@ -272,22 +290,22 @@ class SensorReader:
         """
         return os.path.join(self.sensor_path, name)
 
-    def start_write(self, datadir=None):
+    def start_write(self, data_dir=None):
         """
         Start writing sensor data to hard disk. Used when creating datasets for later use
 
         Parameters:
-        datadir (str, optional): Directory to store data. Defaults to None.
+        data_dir (str, optional): Directory to store data. Defaults to None.
         """
         self.first = True
-        self.init_watchdog(datadir)
+        self.init_watchdog(data_dir)
 
-    def _writer_worker(self, datadir=None):
+    def _writer_worker(self, data_dir=None):
         """
         Takes snapshots of data. Used for creating datasets
 
         Parameters:
-        datadir (str, optional): Directory to store data. Defaults to None.
+        data_dir (str, optional): Directory to store data. Defaults to None.
         """
         if self.wait_event.is_set():
             return
@@ -298,19 +316,19 @@ class SensorReader:
             time.sleep(self.wait_time - time_step)
             self.wait_event.clear()
         self.prev_ts = time.time()
-        self.take_snapshot(datadir, compresslevel=3)
+        self.take_snapshot(data_dir, compresslevel=3)
 
-    def init_watchdog(self, datadir=None):
+    def init_watchdog(self, data_dir=None):
         """
         Initialize the watchdog to monitor changes in sensor data. When new data arrives
         Write it to given path
 
         Parameters:
-        datadir (str, optional): Directory to store data. Defaults to self.datadir.
+        data_dir (str, optional): Directory to store data. Defaults to self.data_dir.
         """
-        if datadir is None:
-            datadir = self.datadir
-        os.makedirs(datadir, exist_ok=True)
+        if data_dir is None:
+            data_dir = self.data_dir
+        os.makedirs(data_dir, exist_ok=True)
 
         class EventHandler(FileSystemEventHandler):
             def __init__(self, parent):
@@ -322,7 +340,7 @@ class SensorReader:
                     return
                 basename = os.path.basename(event.src_path)
                 if basename == self.parent.to_watch:
-                    self.parent._writer_worker(datadir)
+                    self.parent._writer_worker(data_dir)
 
         self.observer = Observer()
         eh = EventHandler(self)
@@ -388,7 +406,7 @@ class SensorReader:
                     callback(data)
 
         observer = Observer()
-        eh = EventHandler(self)
+        eh = EventHandler()
         observer.schedule(eh, dirpath, recursive=True)
         observer.start()
         self.observers[value_to_watch] = observer
