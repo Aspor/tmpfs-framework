@@ -1,7 +1,5 @@
 [![Unit tests](https://github.com/Aspor/tmpfs-framework/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/Aspor/tmpfs-framework/actions/workflows/python-app.yml)
 
-# Python implementation of "A tmpfs Based Middleware For Robotics Applications"
-
 Allows one way communication between two separate python process via Linux's tmpfs. Future implantation will add two way communication.
 
 Robots need to handle tasks like sensing the environment, planning actions, and controlling movement. Doing all this in one big program makes things complicated and hard to change. A better way is to split the system into smaller parts that talk to each other using interprocess communication (IPC).
