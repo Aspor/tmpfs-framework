@@ -26,7 +26,10 @@ and  https://joss.readthedocs.io/en/latest/paper.html  --->
 
 Robotic systems must perform diverse tasks such as sensing, planning, and actuation. Implementing all these functions within a single monolithic program leads to complexity and hinders future development. A modular approach — where each subsystem communicates via interprocess communication (IPC) — improves maintainability and flexibility.
 
-The tmpfs framework is a simple IPC solution for Linux. It uses temporary files in memory (tmpfs) to share data between programs and Data is stored in files with clear names. The Concise Binary Object Representation (CBOR) serves as a serialization protocol optimized for efficient handling of binary data. This methodology accommodates complex data structures, including arrays and images, rendering it highly adaptable for diverse applications. The associated framework is lightweight, ensuring seamless deployment and operation across the majority of Linux-based systems. A key advantage of this approach is the straightforward integration of additional sensors or actuators, made possible by its flexible message architecture.
+
+
+The tmpfs framework is a simple IPC solution for Linux. It uses temporary files in memory (tmpfs) to share data between programs and data is stored in files with clear names. The Concise Binary Object Representation (CBOR) serves as a serialization protocol optimized for efficient handling of binary data. This methodology accommodates complex data structures, including arrays and images, rendering it highly adaptable for diverse applications. The associated framework is lightweight, ensuring seamless deployment and operation across the majority of Linux-based systems. A key advantage of this approach is the straightforward integration of additional sensors or actuators, made possible by its flexible message architecture.
+
 
 **Principal Advantages**
 
@@ -41,18 +44,22 @@ Although the framework may not be optimal for stringent real-time applications, 
 
 # Statement of Need
 
-Robotic systems need to perform several interconnected tasks to function in real environments. These tasks include perception of environment using different sensors, planning actions, and controlling actuators to execute these actions. Each of these tasks can be further divided into subtasks, some of which can operate independently of other tasks, some requiring other tasks to be performed. For example, planning a safe and effective route for robot requires information of robot’s surroundings so sensors need to be collecting information for the planning system.
+Robotic systems need to perform several interconnected tasks to function in real environments. These tasks include perception of environment using different sensors, planning actions, and controlling actuators to execute these actions. Each of these tasks can be further divided into subtasks, some of which can operate independently of other tasks, some requiring other tasks to be performed. For example, planning a safe and effective route for an autonomous robot requires information of robot’s surroundings so sensors need to be collecting information for the planning system.
 
 A single program that performs all these tasks would lead to large and complex codebase and can lead to inflexibilities in the system when some parts need to be modified. It is often beneficial to divide the robotic system to smaller subsystems. These systems have to share information with each other, thus need for an inter-process communication solution.
 
 Interprocess communication allows exchanging information between programs running on same computer. It allows creating non monolithic systems that consist of several separate programs each performing a specific task. When the system consists of multiple small programs, each program can be developed separately making the system more maintainable and flexible.
 
 # The tmpfs framework
+![Dataflow in the example system. \label{fig:tmpfs_dataflow}](tmpfs_framework.png){ width=88% }
 
-The tmpfs-framework is a lightweight IPC solution for Linux robotics. It uses the tmpfs in-memory file system, allowing processes to exchange data quickly by reading and writing files in RAM. Each file is clearly named and organized, making it easy to add or modify sensors and actuators without rigid message formats.
+
+The tmpfs-framework is a lightweight IPC solution for Linux robotics. It uses the tmpfs in-memory file system, allowing processes to exchange data quickly by reading and writing files in RAM. Each file is clearly named and organized, making it easy to add or modify sensors and actuators without rigid message formats. Data read from a physical sensor is saved on the tmpfs, where it can be read and refined for further use as illustrated in \autoref{fig:tmpfs_dataflow}.
+
 Data is serialized using CBOR, which provides compact, binary encoding and supports complex data types like arrays and images. This enables schema-free, efficient communication between components.
 The framework ensures data integrity with atomic file operations: data is written to a temporary file and then atomically renamed, so readers never see incomplete data. Linux manages file lifetimes, preventing deletion while files are in use.
 With minimal dependencies and POSIX compliance, the framework is portable across Linux systems and easy to deploy. It is best suited for research and development scenarios where modularity and rapid integration are priorities, though it is not intended for hard real-time applications.
+
 
 The tmpfs-framework requires only few libraries, most of which are installed by default in many popular Linux distributions. The framework can easily be deployed in most computers running modern Linux. It is a useful tool in robotics research allowing fast integration of new sensors and actuators to measure their performance in robotic tasks. Because of its portability, device interfaces can be developed on desktop computers and later deployed in computers controlling robots. Because system is self-describing and does not require predefined messages or data-types users free to use data from the sensors as it is and not forced to lose information forcing the data to old message types.
 

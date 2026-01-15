@@ -31,9 +31,10 @@ Requirements:
         python3 -m build
         python3 -m pip install dist/tmpfs_framework-0.0.1-py3-none-any.whl
 
-## Usage
-In example directory there are some example code showcasing usage.
 
+
+
+## Usage
 
 Default tmpfs path is set to /home/robot/tmp/ this can be changed by setting TMPFS_PATH variable in tmpfs_framework module
 ```
@@ -45,6 +46,8 @@ or by setting TMPFS_PATH environment variable in shell:
 $export  TMPFS_PATH=/path/to/tmpfs
 ```
 
+
+
 ### tmpfs
 
 Create a tmpfs to use:
@@ -53,6 +56,16 @@ Create a tmpfs to use:
 
 See
 https://www.kernel.org/doc/html/latest/filesystems/tmpfs.html for more details how to create a tmpfs
+
+
+### Examples
+In examples directory there are some usage examples including:
+1. Guided example
+    - Step by step example to create dummy sensors and show some features
+2. Webcam example
+    - Example with real hardware showing how data can be processed
+3. Network monitoring
+    - Example with real data that should run on most computers without additional hardware
 
 
 
