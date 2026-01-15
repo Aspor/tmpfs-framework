@@ -1,82 +1,132 @@
+
+# tmpfs-framework
+
 [![Unit tests](https://github.com/Aspor/tmpfs-framework/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/Aspor/tmpfs-framework/actions/workflows/python-app.yml)
 
-Allows one way communication between two separate python process via Linux's tmpfs. Future implantation will add two way communication.
-
-Robots need to handle tasks like sensing the environment, planning actions, and controlling movement. Doing all this in one big program makes things complicated and hard to change. A better way is to split the system into smaller parts that talk to each other using interprocess communication (IPC).
-
-The tmpfs framework is a simple IPC solution for Linux. It uses temporary files in memory (tmpfs) to share data between programs. Data is stored in files with clear names, and  Concise Binary Object Representation (CBOR) is used for efficient binary serialization, including support for arrays and images. The framework is lightweight, works on most Linux systems, and makes it easy to add new sensors or actuators without rigid message formats.
 
 
-Why it’s useful:
+A lightweight IPC (Interprocess Communication) framework for Linux using **tmpfs** and **CBOR**. Designed for modular robotics and distributed Python systems, it enables simple, fast, one‑way communication between processes. Two‑way communication is planned for future releases.
 
-- Easy to set up
-- Portable across Linux
-- Self-describing data
-- Supports “publish and forget” communication
+---
 
-While not necessary suitable for hard real-time applications, tmpfs-based IPC can perform well in scenarios requiring modularity, transparency, and ease of integration.
+## Overview
 
+Robotic systems often consist of multiple subsystems—sensors, planners, controllers—running independently. Packing everything into a single monolithic program quickly becomes difficult to maintain and scale. A better architecture is to split functionality into separate processes connected by a simple communication layer.
 
-## Requirements:
+The **tmpfs-framework** provides such a layer using:
 
-* cbor2>=5.4.6
-* numpy>=1.21.5
-* watchdog>=2.1.6
-* Linux
+- **tmpfs** — in‑memory temporary file storage on Linux
+- **CBOR serialization** — compact, self‑describing binary messages
+- **File‑based IPC** — easy to inspect, debug, and extend
 
-## Build and install using pythons build module and pip:
-Requirements:
-* hatchling
+This approach offers a transparent and flexible communication mechanism without complex middleware or strict message schemas.
 
-        python3 -m build
-        python3 -m pip install dist/tmpfs_framework-0.0.1-py3-none-any.whl
+---
 
+## Features
 
+- **Simple setup** — no background services or daemons
+- **Portable** — runs on most Linux distributions
+- **Supports arrays and images** through CBOR
+- **Lightweight** — minimal dependencies
+- **Publish‑and‑forget** semantics
+- **Human‑readable file structure** inside tmpfs
 
+>  While not ideal for hard real‑time systems, tmpfs‑based IPC performs well where modularity, clarity, and extensibility are priorities.
 
-## Usage
+---
 
-Default tmpfs path is set to /home/robot/tmp/ this can be changed by setting TMPFS_PATH variable in tmpfs_framework module
+## Requirements
+
+- `cbor2 >= 5.4.6`
+- `numpy >= 1.21.5`
+- `watchdog >= 2.1.6`
+- Linux
+- (For building) `hatchling`
+
+---
+
+## Installation
+
+Build using Python’s build system and install with pip:
+
+```bash
+python3 -m build
+python3 -m pip install dist/tmpfs_framework-0.0.1-py3-none-any.whl
 ```
+
+---
+
+## Configuration
+
+Default tmpfs path:
+
+```
+/home/robot/tmp/
+```
+
+Override it in Python:
+
+```python
 import tmpfs_framework
-TMPFS_PATH = "/path/to/tmpfs"
-```
-or by setting TMPFS_PATH environment variable in shell:
-```
-$export  TMPFS_PATH=/path/to/tmpfs
+tmpfs_framework.TMPFS_PATH = "/path/to/tmpfs"
 ```
 
+Or via environment variable:
 
+```bash
+export TMPFS_PATH=/path/to/tmpfs
+```
 
-### tmpfs
+---
 
-Create a tmpfs to use:
+##  Setting Up a tmpfs
 
-        mount -t tmpfs tmpfs   /path/to/tmpfs/
+Create a tmpfs directory:
 
-See
-https://www.kernel.org/doc/html/latest/filesystems/tmpfs.html for more details how to create a tmpfs
+```bash
+sudo mount -t tmpfs tmpfs /path/to/tmpfs/
+```
 
+More details:
+https://www.kernel.org/doc/html/latest/filesystems/tmpfs.html
 
-### Examples
-In examples directory there are some usage examples including:
-1. Guided example
-    - Step by step example to create dummy sensors and show some features
-2. Webcam example
-    - Example with real hardware showing how data can be processed
-3. Network monitoring
-    - Example with real data that should run on most computers without additional hardware
+---
 
+##  Examples
 
+The `examples/` directory includes:
 
-## Contributing
+#### 1. **Guided Example**
+A step‑by‑step walkthrough demonstrating dummy sensors and framework features.
 
-If you found a bug or want a new feature feel free to open a issue in this GitHub repository.
+#### 2. **Webcam Example**
+Uses real hardware to show image acquisition and processing.
 
-Or if you improve the framework and want to share you can create a pull request
+#### 3. **Network Monitoring**
+Works on most machines without additional hardware
 
+---
 
-## Citing
-If you use this work in your research please cite the following paper:
+##  Contributing
 
-`Mäenpää, T., Tikanmäki, A., Röning, J. (2025). A tmpfs-Based Middleware for Robotics Applications. In: Arai, K. (eds) Intelligent Systems and Applications. IntelliSys 2025. Lecture Notes in Networks and Systems, vol 1567. Springer, Cham. https://doi.org/10.1007/978-3-032-00071-2_35`
+Contributions are welcome!
+
+- Found a bug? Open an **issue**.
+- Added an improvement? Create a **pull request**.
+
+---
+
+## Citation
+
+If you use this framework in research, please cite:
+
+```
+Mäenpää, T., Tikanmäki, A., Röning, J. (2025).
+A tmpfs-Based Middleware for Robotics Applications.
+In: Arai, K. (eds) Intelligent Systems and Applications. IntelliSys 2025.
+Lecture Notes in Networks and Systems, vol 1567. Springer, Cham.
+https://doi.org/10.1007/978-3-032-00071-2_35
+```
+
+---
