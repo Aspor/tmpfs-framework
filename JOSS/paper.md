@@ -44,24 +44,25 @@ Although the framework may not be optimal for stringent real-time applications, 
 
 # Statement of Need
 
-Robotic systems need to perform several interconnected tasks to function in real environments. These tasks include perception of environment using different sensors, planning actions, and controlling actuators to execute these actions. Each of these tasks can be further divided into subtasks, some of which can operate independently of other tasks, some requiring other tasks to be performed. For example, planning a safe and effective route for an autonomous robot requires information of robot’s surroundings so sensors need to be collecting information for the planning system.
+Robotic systems must coordinate several interconnected tasks to function in real environments. These tasks include perception of environment using different sensors, planning actions, and controlling actuators to execute these actions. Each of these tasks  can be broken down further into smaller components, some of which operate independently while others depend on shared information. For example, planning a safe and effective route for an autonomous robot requires information of robot’s surroundings so sensors need to be collecting information for the planning system.
 
 A single program that performs all these tasks would lead to large and complex codebase and can lead to inflexibilities in the system when some parts need to be modified. It is often beneficial to divide the robotic system to smaller subsystems. These systems have to share information with each other, thus need for an inter-process communication solution.
 
-Interprocess communication allows exchanging information between programs running on same computer. It allows creating non monolithic systems that consist of several separate programs each performing a specific task. When the system consists of multiple small programs, each program can be developed separately making the system more maintainable and flexible.
+IPC allows exchanging information between programs running on same computer. It allows creating non monolithic systems that consist of several separate programs each performing a specific task. When the system consists of multiple small programs, each program can be developed separately making the system more maintainable and flexible.
 
 # The tmpfs framework
-![Dataflow in the example system. \label{fig:tmpfs_dataflow}](tmpfs_framework.png){ width=88% }
+![Dataflow in a example system. \label{fig:tmpfs_dataflow}](tmpfs_framework.png){ width=88% }
 
 
 The tmpfs-framework is a lightweight IPC solution for Linux robotics. It uses the tmpfs in-memory file system, allowing processes to exchange data quickly by reading and writing files in RAM. Each file is clearly named and organized, making it easy to add or modify sensors and actuators without rigid message formats. Data read from a physical sensor is saved on the tmpfs, where it can be read and refined for further use as illustrated in \autoref{fig:tmpfs_dataflow}.
 
 Data is serialized using CBOR, which provides compact, binary encoding and supports complex data types like arrays and images. This enables schema-free, efficient communication between components.
-The framework ensures data integrity with atomic file operations: data is written to a temporary file and then atomically renamed, so readers never see incomplete data. Linux manages file lifetimes, preventing deletion while files are in use.
-With minimal dependencies and POSIX compliance, the framework is portable across Linux systems and easy to deploy. It is best suited for research and development scenarios where modularity and rapid integration are priorities, though it is not intended for hard real-time applications.
+The framework ensures data integrity with atomic file operations: data is written to a temporary file and then atomically renamed, so readers never see incomplete data. POSIX compliant operating systems ensure that renaming a file inside one file system is an atomic operation.  The operating system also manages file lifetimes after a new file is renamed over the old one, any open file is deleted only after last process using the file closes it.
+
+With minimal dependencies and POSIX compliance, the framework is portable across Linux systems and easy to deploy.
 
 
-The tmpfs-framework requires only few libraries, most of which are installed by default in many popular Linux distributions. The framework can easily be deployed in most computers running modern Linux. It is a useful tool in robotics research allowing fast integration of new sensors and actuators to measure their performance in robotic tasks. Because of its portability, device interfaces can be developed on desktop computers and later deployed in computers controlling robots. Because system is self-describing and does not require predefined messages or data-types users free to use data from the sensors as it is and not forced to lose information forcing the data to old message types.
+The tmpfs-framework requires only few libraries, most of which are installed by default in many popular Linux distributions. The framework can easily be deployed in most computers running modern Linux. It is a useful tool in robotics research allowing fast integration of new sensors and actuators to measure their performance in robotic tasks. Because of its portability, device interfaces can be developed on desktop computers and later deployed in computers controlling robots. Because system is self-describing and does not require predefined messages or data-types users free to use data from the sensors as it is and not forced to lose information forcing the data to old message types. The framework is best suited for research and development scenarios where modularity and rapid integration are priorities, though it is not intended for hard real-time applications.
 
 
 # State of the field:
@@ -75,6 +76,6 @@ Other notable robotics middlewares include Mira [@Einhorn:2012] used mostly by I
 # Acknowledgements
 
 # Use of AI
-Generative AI was used to improve PEP8 compliance of the code and to generate initial docstrings. Changes made by AI were verified to not have any effect on functionality of the code. Initial version of unit tests were generated with generative AI, but were later reworked manually. Generative AI was used during paper writing for initial drafting, rewritten later by human, and later to improve grammar.
+Generative AI was used to improve PEP8 compliance, create initial docstrings, and produce an early version of the unit tests (later rewritten manually). AI-assisted drafting was also used during preparation of this paper, with all content subsequently revised by a human author. Grammar and clarity improvements were made with the help of generative AI.
 
 # References
