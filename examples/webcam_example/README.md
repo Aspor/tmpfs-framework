@@ -8,10 +8,12 @@ The example contains three Python modules that work together to capture webcam i
 config:
   layout: elk
 ---
-flowchart TD
+flowchart LR
     A[WebcamReader] -->|Writes frames| B[("tmpfs")]
-    B -->|Reads frames| C[CircleFinder]
-    C -->|Writes detected
+    B -->|Reads
+    frames| C[CircleFinder]
+    C -->|Writes
+    detected
     shapes | B
     B -->|Reads shapes & frames| D[Visualization Module]
 ```
@@ -24,6 +26,9 @@ Images are captured from webcam stream, written in tmpfs. Images in tmpfs are re
 3. Demonstrates idea of having data processing module that generates new data from existing.
     - This allows implementing a whiteboard system where some processes provide raw data and other processes process the data to generate additional information
 
+
+## Extra Dependencies
+- OpenCV (`cv2`)
 
 ---
 
@@ -71,9 +76,6 @@ python visualisation.py
 ```
 
 ---
-
-## Extra Dependencies
-- OpenCV (`cv2`)
 
 ---
 
