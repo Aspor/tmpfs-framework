@@ -51,7 +51,9 @@ A single program that performs all these tasks would lead to large and complex c
 IPC allows exchanging information between programs running on same computer. It allows creating non monolithic systems that consist of several separate programs each performing a specific task. When the system consists of multiple small programs, each program can be developed separately making the system more maintainable and flexible.
 
 # The tmpfs framework
-![Dataflow in a example system. \label{fig:tmpfs_dataflow}](tmpfs_framework.png){ width=88% }
+![Dataflow in a example system using a webcam to capture images, detect circles in the images and visualise the detection results. \label{fig:tmpfs_dataflow}](webcam_example.png){ width=88% }
+
+
 
 
 The tmpfs-framework is a lightweight IPC solution for Linux robotics. It uses the tmpfs in-memory file system, allowing processes to exchange data quickly by reading and writing files in RAM. Each file is clearly named and organized, making it easy to add or modify sensors and actuators without rigid message formats. Data read from a physical sensor is saved on the tmpfs, where it can be read and refined for further use as illustrated in \autoref{fig:tmpfs_dataflow}.
